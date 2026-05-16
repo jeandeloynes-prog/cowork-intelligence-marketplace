@@ -1,0 +1,23 @@
+{
+  "name": "cowork-intelligence",
+  "version": "0.1.0",
+  "description": "Framework d'analyse et d'optimisation pour Claude Code / Claude Cowork : skills, hooks, MCP, CLAUDE.md, context engineering, token optimization, orchestration agentique. Bilingue FR/EN.",
+  "author": "Jean de Loynes",
+  "homepage": "",
+  "repository": "",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "cowork",
+    "skills",
+    "hooks",
+    "mcp",
+    "context-engineering",
+    "token-optimization",
+    "agent-orchestration",
+    "observability",
+    "governance",
+    "audit",
+    "framework"
+  ]
+}

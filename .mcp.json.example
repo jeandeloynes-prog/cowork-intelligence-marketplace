@@ -1,0 +1,31 @@
+{
+  "_comment": "EXAMPLE FILE — NOT auto-loaded. Copy to .mcp.json at your project root (or .claude/.mcp.json) and uncomment the servers you want to enable. Each MCP server adds its tool descriptions to the per-turn context budget — keep only what you actively use.",
+
+  "mcpServers": {
+
+    "filesystem": {
+      "_purpose": "Read/write files in a controlled directory. Useful when you want Claude Code to operate on a folder it doesn't already see.",
+      "_source": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/absolute/path/to/your/folder"]
+    },
+
+    "git": {
+      "_purpose": "Read git history, diffs, branches without shelling out from inside Claude.",
+      "_source": "https://github.com/modelcontextprotocol/servers/tree/main/src/git",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "/absolute/path/to/repo"]
+    },
+
+    "graphify-example": {
+      "_purpose": "Graph-based context server (community). I do not verify its current status — confirm the package, repo, and trust before enabling.",
+      "_warning": "Unverified by this plugin. Replace with the exact command from the upstream project before use.",
+      "command": "node",
+      "args": ["/absolute/path/to/graphify-mcp/dist/index.js"],
+      "env": {
+        "GRAPHIFY_API_KEY": "${GRAPHIFY_API_KEY}"
+      }
+    }
+
+  }
+}
