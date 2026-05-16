@@ -4,6 +4,28 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — 2026-05-16
+
+### Added
+- New skill `cowork-mcp-audit` : dedicated MCP server audit with conservative cost estimation and live-probe helper.
+- New slash command `/cowork-legal-mode <on|off>` : batch enable/disable the 13 `claude-for-legal` plugins via safe JSON patch (jq) with timestamped backup.
+- New script `scripts/toggle_legal_plugins.sh` : underlying mechanism for the slash command above. Backup → jq patch → validate → atomic mv.
+- New script `scripts/detect_weak_descriptions.sh` : robust SKILL.md description scanner that correctly handles YAML multiline scalars (`|`, `>`). Replaces the v0.1.0 awk heuristic which produced false positives.
+- New script `scripts/probe_mcp_server.sh` : stdio JSON-RPC probe to measure the real per-turn cost of a given MCP server (tool count, description bytes, schema bytes, total tokens).
+- New `UserPromptSubmit` hook `hooks/legal_keyword_suggester.sh` : silently suggests `/cowork-legal-mode on` when a legal keyword is detected in the user prompt AND fewer than 3 legal plugins are enabled. Silent otherwise.
+
+### Changed
+- `scripts/measure_context.sh` : full rewrite. Deduplicates paths via `realpath` (no more double-counting when run from `$HOME`), scans `~/.claude/skills/` (was missing in v0.1.0), and prints per-section subtotals.
+- `.claude-plugin/plugin.json` : version 0.1.0 → 0.2.0, author is now an object, homepage and repository filled in.
+
+### Notes
+- v0.2.0 explicitly addresses three audit findings reported on v0.1.0 in the field :
+  1. User-level skills outside the plugin cache were missed by the measurement script.
+  2. Description detection produced false positives ("1 char") on YAML multiline.
+  3. No tooling to measure the real MCP cost — added via `cowork-mcp-audit` skill + `probe_mcp_server.sh`.
+
+---
+
 ## [0.1.0] — 2026-05-16
 
 ### Added

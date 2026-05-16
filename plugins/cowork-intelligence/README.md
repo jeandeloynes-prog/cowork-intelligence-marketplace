@@ -19,18 +19,24 @@ cowork-intelligence-plugin/
 │   ├── cowork-context-token-optimization/ # Prompt caching, context rot, budgets
 │   ├── cowork-orchestration-memory/     # Patterns agentiques + memory backends
 │   ├── cowork-observability-governance/ # OTel GenAI, plateformes, versioning
-│   └── cowork-analysis-engine/          # Audit automatique du setup
-│   └── cowork-decision-system/          # Arbres de décision + taxonomie
+│   ├── cowork-analysis-engine/          # Audit automatique du setup
+│   ├── cowork-decision-system/          # Arbres de décision + taxonomie
+│   └── cowork-mcp-audit/                # NEW v0.2.0 : audit dédié des MCP servers
 ├── hooks/
 │   ├── hooks.json                       # Déclaration des hooks
 │   ├── session_start_banner.sh          # Banner discret au démarrage
-│   └── token_budget_warner.sh           # Avertissement si contexte stable > seuil
+│   ├── token_budget_warner.sh           # Avertissement si contexte stable > seuil
+│   └── legal_keyword_suggester.sh       # NEW v0.2.0 : suggère /cowork-legal-mode on si keyword juridique détecté
 ├── commands/
 │   ├── cowork-analyze.md                # /cowork-analyze
 │   ├── cowork-optimize.md               # /cowork-optimize
-│   └── cowork-audit.md                  # /cowork-audit
+│   ├── cowork-audit.md                  # /cowork-audit
+│   └── cowork-legal-mode.md             # NEW v0.2.0 : /cowork-legal-mode <on|off>
 ├── scripts/
-│   └── measure_context.sh               # Mesure rapide du contexte stable
+│   ├── measure_context.sh               # Mesure du contexte stable (v0.2.0 : dedup + scan ~/.claude/skills/)
+│   ├── detect_weak_descriptions.sh      # NEW v0.2.0 : détection robuste descriptions faibles (YAML multiline OK)
+│   ├── toggle_legal_plugins.sh          # NEW v0.2.0 : moteur du /cowork-legal-mode
+│   └── probe_mcp_server.sh              # NEW v0.2.0 : probe stdio d'un MCP server pour mesurer son coût réel
 ├── .mcp.json.example                    # Exemples de serveurs MCP commentés
 ├── CHANGELOG.md
 ├── SOURCES.md
@@ -86,6 +92,7 @@ Une fois le plugin installé :
 | `/cowork-analyze` | Audit complet (skills, hooks, MCP, CLAUDE.md, commands). Rapport priorisé. |
 | `/cowork-optimize` | Audit ciblé sur le coût tokens. Plan de réduction. |
 | `/cowork-audit` | Audit gouvernance et maintenabilité (versions, schemas, drift). |
+| `/cowork-legal-mode <on\|off>` | **v0.2.0** — Active/désactive en bloc les 13 plugins `claude-for-legal` avec backup automatique de `~/.claude/settings.json`. À faire suivre de `/reload-plugins`. |
 
 Les skills se déclenchent automatiquement quand Claude détecte les triggers (voir la liste dans chaque `SKILL.md`).
 
