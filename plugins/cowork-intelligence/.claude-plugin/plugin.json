@@ -1,6 +1,6 @@
 {
   "name": "cowork-intelligence",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Framework d'analyse et d'optimisation pour Claude Code / Claude Cowork : skills, hooks, MCP, CLAUDE.md, context engineering, token optimization, orchestration agentique. Bilingue FR/EN.",
   "author": {
     "name": "Jean de Loynes"

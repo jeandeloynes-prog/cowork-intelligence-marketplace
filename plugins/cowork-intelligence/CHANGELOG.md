@@ -4,6 +4,18 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] — 2026-05-16 — hotfix
+
+### Fixed
+- **`scripts/graphify_refresh.sh`** : si `cwd` n'est pas dans un repo git ET correspond à une zone "protégée" (`$HOME`, `/`, `/Users`, `/tmp`, `/var`, `/etc`), le script refuse maintenant explicitement de lancer un `graphify update` ou `extract` au lieu de tenter d'indexer toute la home dir. Message d'erreur clair invitant à `cd` dans un projet ou à passer un chemin explicite.
+- **Symptôme corrigé** : lancer `/cowork-intelligence:cowork-graphify-refresh extract` depuis Claude Code en cwd = `/Users/admin` faisait tourner `graphify extract /Users/admin` pendant ~50 minutes sur 157k fichiers. Plus jamais.
+
+### Notes
+- Le hook PostToolUse `graphify_post_edit.sh` n'est pas affecté (il délégate à `graphify_refresh.sh` qui contient maintenant le garde).
+- Recommandation utilisateur : si tu as déjà un `~/graphify-out/` lourd (1+ GB) issu d'un extract sur HOME, tu peux le supprimer si tu n'en as pas besoin : `rm -rf ~/graphify-out` (la prochaine extraction sur un projet précis créera un graphe ciblé dans `<projet>/graphify-out/`).
+
+---
+
 ## [0.3.1] — 2026-05-16
 
 ### Removed (deduplication with official Graphify Claude integration)

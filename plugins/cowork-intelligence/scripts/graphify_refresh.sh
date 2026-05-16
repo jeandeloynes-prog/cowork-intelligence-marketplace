@@ -48,13 +48,25 @@ mkdir -p "$STAMP_DIR"
 
 ARG="${1:-project}"
 
-# Resolve cwd project path (used for project / extract / all)
+# Resolve cwd project path (used for project / extract / all).
+# Returns empty string if we are NOT in a usable project — caller must handle.
 resolve_project_path() {
-  if PROJ=$(git rev-parse --show-toplevel 2>/dev/null); then
-    echo "$PROJ"
-  else
-    echo "$PWD"
+  local proj
+  if proj=$(git rev-parse --show-toplevel 2>/dev/null); then
+    echo "$proj"
+    return 0
   fi
+  # Safety guards to avoid indexing huge non-project trees:
+  # - refuse if cwd is HOME (would scan every dotfile + Documents + etc.)
+  # - refuse if cwd is "/"
+  # - refuse if cwd is a known non-project area
+  case "$PWD" in
+    "$HOME"|"$HOME/"|"/"|"/Users"|"/Users/"|"/tmp"|"/var"|"/etc")
+      echo ""
+      return 1
+      ;;
+  esac
+  echo "$PWD"
 }
 
 # Debounce check — returns 0 if we should skip, 1 if we should proceed
@@ -79,7 +91,13 @@ stamp_now() {
 run_project() {
   local mode="$1"   # update | extract
   local path
-  path=$(resolve_project_path)
+  path=$(resolve_project_path) || true
+  if [ -z "$path" ]; then
+    echo "[cowork-intelligence] graphify_refresh: cwd '$PWD' is not inside a git repo and is a protected location (HOME, /, /Users, etc.). Refusing to $mode. Either:"
+    echo "  - cd into a project directory first, OR"
+    echo "  - run 'graphify $mode <path>' manually with an explicit path."
+    return 0
+  fi
   local scope
   scope=$(basename "$path")
 
