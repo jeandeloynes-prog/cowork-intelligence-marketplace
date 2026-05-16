@@ -4,6 +4,25 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] — 2026-05-16
+
+### Added
+- **`scripts/graphify_refresh.sh`** : sélection de backend Graphify automatique. Priorité :
+  1. `.backend` explicite dans `~/.claude/graphify-config.json` (`ollama`, `gemini`, `openai`, `claude`, `kimi`).
+  2. **`OLLAMA_BASE_URL` défini ET endpoint reachable** (`curl -m 2 ${OLLAMA_BASE_URL}/models`) → backend `ollama` + `--api-timeout 600` automatique.
+  3. Sinon → laisse Graphify choisir son backend par défaut (Gemini si la clé est dans l'env, etc.).
+- **`graphify-config.example.json`** : ajoute le champ optionnel `backend` (valeurs : `auto` | `ollama` | `gemini` | `openai` | `claude` | `kimi`) et documente le pattern LM Studio (vars `OLLAMA_BASE_URL` / `OLLAMA_API_KEY` / `OLLAMA_MODEL`).
+- **Log explicite** dans le script : `backend=ollama` (ou `default`, ou `gemini`, etc.) affiché à chaque run, pour audit visuel.
+
+### Pourquoi
+La détection auto de Graphify pick le premier paid API key de l'env (Gemini > Claude > OpenAI > Kimi > Ollama). Si l'utilisateur garde Gemini dans l'env pour d'autres outils, Graphify va router sur Gemini sans demander, même si LM Studio est lancé. Ce changement permet de router localement sans devoir déloger les clés payantes du shell.
+
+### Compat
+- Pas de breaking change. Si `graphify-config.json` n'a pas de `.backend` et qu'`OLLAMA_BASE_URL` n'est pas défini → comportement identique à v0.3.2.
+- Le script teste l'endpoint Ollama avec `curl -m 2` avant de bascule sur le backend ollama : si LM Studio est éteint, fallback transparent sur le backend par défaut de Graphify.
+
+---
+
 ## [0.3.2] — 2026-05-16 — hotfix
 
 ### Fixed

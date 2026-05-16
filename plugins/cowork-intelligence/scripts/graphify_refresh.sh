@@ -48,6 +48,44 @@ mkdir -p "$STAMP_DIR"
 
 ARG="${1:-project}"
 
+# ───────────────────────────────────────────────────────────────────────
+# Backend selection (v0.3.3)
+#
+# Priority:
+#   1. graphify-config.json:.backend explicit value → use as-is
+#   2. OLLAMA_BASE_URL set AND reachable (HEAD /models OK) → backend=ollama
+#   3. nothing set → leave graphify on its own default (Gemini, OpenAI, …)
+#
+# Why this matters: graphify's auto-detection picks the first paid API key
+# it sees in the env (Gemini, Claude, OpenAI, Kimi, then Ollama last). On a
+# machine where the user wants Graphify routed locally (LM Studio) while
+# keeping paid keys available for other tools, we need to pass
+# --backend ollama explicitly. This block handles that without forcing the
+# user to unset their paid keys.
+# ───────────────────────────────────────────────────────────────────────
+BACKEND=""
+if [ -f "$CONFIG" ] && command -v jq >/dev/null 2>&1; then
+  CONFIG_BACKEND=$(jq -r '.backend // empty' "$CONFIG" 2>/dev/null || echo "")
+  if [ -n "$CONFIG_BACKEND" ] && [ "$CONFIG_BACKEND" != "auto" ] && [ "$CONFIG_BACKEND" != "null" ]; then
+    BACKEND="$CONFIG_BACKEND"
+  fi
+fi
+if [ -z "$BACKEND" ] && [ -n "${OLLAMA_BASE_URL:-}" ]; then
+  # Best-effort liveness check (2 s timeout). curl is on every macOS.
+  if curl -fsS -m 2 "${OLLAMA_BASE_URL%/}/models" >/dev/null 2>&1; then
+    BACKEND="ollama"
+  fi
+fi
+
+BACKEND_ARGS=()
+if [ -n "$BACKEND" ]; then
+  BACKEND_ARGS=(--backend "$BACKEND")
+  if [ "$BACKEND" = "ollama" ]; then
+    # Local LLMs can be slower than cloud — give them headroom
+    BACKEND_ARGS+=(--api-timeout 600)
+  fi
+fi
+
 # Resolve cwd project path (used for project / extract / all).
 # Returns empty string if we are NOT in a usable project — caller must handle.
 resolve_project_path() {
@@ -103,14 +141,16 @@ run_project() {
 
   check_debounce "$scope" && return 0
 
-  echo "[cowork-intelligence] graphify_refresh: $mode → $path"
+  local backend_label="default"
+  [ -n "$BACKEND" ] && backend_label="$BACKEND"
+  echo "[cowork-intelligence] graphify_refresh: $mode → $path (backend=$backend_label)"
   local start end
   start=$(date +%s)
   if [ "$mode" = "extract" ]; then
-    "$BINARY" extract "$path"
+    "$BINARY" extract "$path" "${BACKEND_ARGS[@]}"
   else
     # `graphify update` runs in the cwd of the graph; cd into the project first.
-    ( cd "$path" && "$BINARY" update )
+    ( cd "$path" && "$BINARY" update "${BACKEND_ARGS[@]}" )
   fi
   end=$(date +%s)
   echo "[cowork-intelligence] graphify_refresh: $mode '$scope' OK in $((end - start))s."

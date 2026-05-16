@@ -1,13 +1,18 @@
 {
-  "_doc": "Config for cowork-intelligence Graphify integration v0.3.1. The binary is autodetected (PATH then ~/.local/bin/graphify) but can be pinned here. The script uses real Graphify sub-commands: `graphify update` (fast, no LLM) for projects, `graphify global add` for the user scope. Initial extraction with LLM is `graphify extract <path>` — run it manually once via /cowork-intelligence:cowork-graphify-refresh extract.",
+  "_doc": "Config for cowork-intelligence Graphify integration v0.3.3. The binary is autodetected (PATH then ~/.local/bin/graphify) but can be pinned here. New in v0.3.3: optional .backend field overrides Graphify's default backend selection — useful if you have a paid API key (Gemini/Claude/OpenAI) in your env for OTHER tools but want Graphify to route locally via LM Studio.",
 
   "binary": "/Users/admin/.local/bin/graphify",
   "debounce_seconds": 30,
+
+  "_backend_doc": "Optional. Values: 'auto' (default — let Graphify decide, or auto-pick 'ollama' if OLLAMA_BASE_URL is set and reachable), 'ollama' (force local via OLLAMA_BASE_URL + OLLAMA_MODEL), 'gemini', 'openai', 'claude', 'kimi'. Omit or set to 'auto' for env-based detection.",
+  "backend": "auto",
 
   "user": {
     "_doc": "Paths to register in Graphify's global cross-repo graph. graphify global add is idempotent — registering a path multiple times is safe.",
     "global_paths": [
       "/Users/admin/Documents/notes"
     ]
-  }
+  },
+
+  "_lmstudio_example": "If you want Graphify to route to LM Studio: ensure these env vars are exported (in ~/.zshenv for example): OLLAMA_BASE_URL=http://localhost:1234/v1, OLLAMA_API_KEY=lm-studio (any string), OLLAMA_MODEL=google/gemma-4-e4b (or whatever LM Studio reports via /v1/models). Then either set backend='ollama' above (force) or 'auto' (auto-detect when OLLAMA_BASE_URL is reachable)."
 }
