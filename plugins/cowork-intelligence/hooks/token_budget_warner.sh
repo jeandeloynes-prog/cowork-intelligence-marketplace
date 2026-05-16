@@ -1,38 +1,85 @@
 #!/usr/bin/env bash
-# cowork-intelligence — UserPromptSubmit hook
-# Best-effort token-budget warning based on the size of stable context files.
-# Stays silent unless we are clearly above a soft threshold.
+# cowork-intelligence — UserPromptSubmit hook (v0.2.1)
 #
-# Disclaimer: this is a coarse estimate. 1 token ~= 4 bytes for English prose,
-# closer to 3 bytes for code. The real per-turn cost includes the harness
-# system prompt and MCP tool schemas which we cannot measure from here.
+# Estimate the per-turn STABLE context (descriptions only, not bodies) and
+# emit a single warning line if it exceeds a soft threshold.
+#
+# Stays silent in the common case. Designed to be fast (<200ms typically).
+#
+# v0.2.1 fixes:
+#   - Stop summing SKILL.md bodies (v0.1.0/v0.2.0 over-estimated wildly when
+#     bodies were heavy, e.g. gstack).
+#   - Now sums:
+#       * CLAUDE.md cascade (full content — it IS loaded per turn)
+#       * SKILL.md YAML frontmatter `description` field (loaded per turn)
+#   - Hooked with a 5 s timeout via hooks.json.
 
 set -euo pipefail
 
-SOFT_LIMIT_BYTES=$((40 * 1024))   # warn above ~10k tokens of stable context
+SOFT_LIMIT_BYTES=$((40 * 1024))   # ~10K tokens of stable context — soft warn
 
 total=0
-add_bytes() {
-  local f="$1"
-  [ -f "$f" ] || return 0
-  local b
-  b=$(wc -c < "$f" 2>/dev/null || echo 0)
-  total=$((total + b))
-}
 
-# CLAUDE.md cascade
-add_bytes "$HOME/.claude/CLAUDE.md"
-add_bytes "./CLAUDE.md"
-add_bytes "./.claude/CLAUDE.md"
+# 1. CLAUDE.md cascade (full bytes)
+for f in "$HOME/.claude/CLAUDE.md" "./CLAUDE.md" "./.claude/CLAUDE.md"; do
+  if [ -f "$f" ]; then
+    b=$(wc -c < "$f" 2>/dev/null || echo 0)
+    total=$((total + b))
+  fi
+done
 
-# Project skills
-if [ -d "./.claude/skills" ]; then
-  while IFS= read -r f; do add_bytes "$f"; done < <(find ./.claude/skills -name 'SKILL.md' 2>/dev/null)
+# 2. SKILL.md description bytes (NOT bodies) — user scope + project scope.
+#    We use python3 for robust YAML frontmatter parsing.
+if command -v python3 >/dev/null 2>&1; then
+  desc_bytes=$(python3 - <<'PY' 2>/dev/null || echo 0
+import os, sys, re
+
+roots = [
+    os.path.expanduser('~/.claude/skills'),
+    os.path.join(os.getcwd(), '.claude/skills'),
+]
+seen = set()
+total = 0
+for root in roots:
+    if not os.path.isdir(root):
+        continue
+    for dirpath, _, filenames in os.walk(root):
+        for fn in filenames:
+            if fn != 'SKILL.md':
+                continue
+            path = os.path.realpath(os.path.join(dirpath, fn))
+            if path in seen:
+                continue
+            seen.add(path)
+            try:
+                with open(path, 'r', errors='replace') as f:
+                    txt = f.read()
+            except Exception:
+                continue
+            if not txt.startswith('---'):
+                continue
+            end = txt.find('\n---', 4)
+            if end < 0:
+                continue
+            fm = txt[3:end]
+            m = re.search(
+                r'^description:\s*(\||>)?\s*(.*?)(?=\n[A-Za-z_][A-Za-z0-9_-]*:|\Z)',
+                fm, re.M | re.S,
+            )
+            if not m:
+                continue
+            body = m.group(2)
+            desc = ' '.join(ln.strip() for ln in body.splitlines() if ln.strip())
+            total += len(desc.encode('utf-8'))
+print(total)
+PY
+)
+  total=$((total + desc_bytes))
 fi
 
 if [ "$total" -gt "$SOFT_LIMIT_BYTES" ]; then
   approx_tokens=$((total / 4))
-  echo "[cowork-intelligence] stable context (project) ~ ${total} bytes (~${approx_tokens} tokens). Consider /cowork-optimize."
+  echo "[cowork-intelligence] stable context (descriptions + CLAUDE.md) ~ ${total} B (~${approx_tokens} tokens). Lance /cowork-intelligence:cowork-optimize pour le détail."
 fi
 
 exit 0

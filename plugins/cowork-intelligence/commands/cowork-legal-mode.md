@@ -23,9 +23,10 @@ Procédure :
 
 3. Une fois le script terminé, affiche un rappel : "Plugins legal $ARGUMENTS. Tape **/reload-plugins** pour appliquer."
 
-4. Si l'utilisateur veut restaurer la version précédente : `cp ~/.claude/settings.json.bak.<timestamp> ~/.claude/settings.json` puis `/reload-plugins`.
+4. Si l'utilisateur veut restaurer la version précédente : `cp ~/.claude/settings.json.bak.<timestamp> ~/.claude/settings.json` puis **redémarrer Claude Code**.
 
-Notes de sécurité :
+Notes importantes :
+- **`/reload-plugins` ne suffit pas pour désactiver complètement un plugin déjà chargé** dans la session courante. Pour que `off` prenne pleinement effet (skills/hooks/MCP retirés du contexte actif), il faut **quitter Claude Code et le relancer**.
 - Le script ne modifie QUE les clés `*@claude-for-legal` dans `enabledPlugins`. Le reste de `settings.json` est préservé via `jq`.
-- Un backup est créé à chaque exécution — facile à restaurer.
-- Limitation : Claude Code n'expose pas d'API pour recharger les plugins programmatiquement. L'étape `/reload-plugins` reste manuelle.
+- Un backup horodaté est créé à chaque exécution (`~/.claude/settings.json.bak.<timestamp>`) — facile à restaurer.
+- Limitation : Claude Code n'expose pas d'API pour recharger ou désactiver dynamiquement les plugins d'une session en cours.

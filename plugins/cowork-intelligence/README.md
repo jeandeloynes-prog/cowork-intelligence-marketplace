@@ -87,6 +87,8 @@ Le fichier `.claude-plugin/marketplace.json` donne un exemple de format pour dis
 
 Une fois le plugin installé :
 
+> ⚠️ **Important — Claude Code 2.x exige le namespace pour les slash commands de plugin.** Utilise `/cowork-intelligence:<command>` (et non `/<command>` directement). Exemple : `/cowork-intelligence:cowork-analyze` au lieu de `/cowork-analyze`. Les skills, en revanche, s'auto-déclenchent sur leurs triggers sans namespace.
+
 | Commande | Effet |
 |---|---|
 | `/cowork-analyze` | Audit complet (skills, hooks, MCP, CLAUDE.md, commands). Rapport priorisé. |

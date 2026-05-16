@@ -4,6 +4,20 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] — 2026-05-16
+
+### Fixed
+- `hooks/token_budget_warner.sh` : ne somme plus les **bodies** des SKILL.md (cause de sur-estimation massive en v0.2.0). Compte désormais : (a) le contenu complet de la cascade CLAUDE.md, (b) le seul champ `description` du frontmatter YAML de chaque SKILL.md. Estimation per-turn correcte.
+- `hooks/legal_keyword_suggester.sh` : remplace les forks `python3` par `jq` pour le parsing de `settings.json`. Hook plus rapide à chaque prompt. Fallback silencieux si `jq` absent.
+- `commands/cowork-legal-mode.md` : note explicite — `/reload-plugins` ne désactive pas réellement un plugin déjà chargé dans la session ; il faut **redémarrer Claude Code** pour que `off` prenne plein effet.
+- `README.md` : avertissement sur le namespace requis pour les slash commands sur Claude Code 2.x (`/cowork-intelligence:<command>`).
+
+### Added
+- `hooks/hooks.json` : champs `"timeout"` (5000 ms pour banner et token_warner, 3000 ms pour le legal suggester) pour borner le coût des hooks.
+- `.claude-plugin/plugin.json` : déclarations explicites `commands`, `skills`, `hooks`. Tente d'activer la découverte non-namespacée des slash commands (à valider sur Claude Code 2.x).
+
+---
+
 ## [0.2.0] — 2026-05-16
 
 ### Added

@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PLUGIN_ROOT/hooks/session_start_banner.sh"
+            "command": "$CLAUDE_PLUGIN_ROOT/hooks/session_start_banner.sh",
+            "timeout": 5000
           }
         ]
       }
@@ -17,11 +18,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PLUGIN_ROOT/hooks/token_budget_warner.sh"
+            "command": "$CLAUDE_PLUGIN_ROOT/hooks/token_budget_warner.sh",
+            "timeout": 5000
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PLUGIN_ROOT/hooks/legal_keyword_suggester.sh"
+            "command": "$CLAUDE_PLUGIN_ROOT/hooks/legal_keyword_suggester.sh",
+            "timeout": 3000
           }
         ]
       }
