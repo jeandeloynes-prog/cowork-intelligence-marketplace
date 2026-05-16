@@ -13,7 +13,7 @@
         "name": "Jean de Loynes"
       },
       "category": "productivity",
-      "source": ".",
+      "source": "./plugins/cowork-intelligence",
       "homepage": "https://github.com/jeandeloynes-prog/cowork-intelligence-marketplace"
     }
   ]
