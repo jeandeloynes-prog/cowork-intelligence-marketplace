@@ -1,6 +1,6 @@
 ---
 name: cowork-analysis-engine
-description: Audit automatique d'un setup Claude Code / Cowork — scanne skills, hooks, MCP, CLAUDE.md, plugins ; détecte redondances, duplications, conflits de triggers, surcoûts tokens, fragmentation excessive, descriptions trop génériques, MCP bavards ; produit un rapport priorisé avec corrections proposées. Déclencheurs — "audit cowork", "audit claude code", "analyse mes skills", "détecter conflits skills", "scan plugins", "redondance skill", "duplications", "skill conflict", "trigger collision", "token audit", "MCP audit", "claude.md audit", "review setup".
+description: Static analyzer pour un setup Claude Code / Cowork. Scanne skills, hooks, MCP, CLAUDE.md, slash commands et manifests de plugins ; détecte redondances, duplications de body, conflits de triggers, descriptions faibles, fragmentation excessive, MCP bavards ; produit un rapport priorisé avec corrections proposées (jamais d'écriture). Cible — skills cache, scope user, scope projet. Déclencheurs — "analyse mes skills", "scan mon setup", "détecter conflits skills", "redondance skill", "duplications", "trigger collision", "review setup Claude Code", "cartographier mes plugins", "static analysis Cowork".
 allowed-tools: Read, Grep, Glob, Bash
 ---
 

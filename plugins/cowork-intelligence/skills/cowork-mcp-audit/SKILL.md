@@ -1,6 +1,6 @@
 ---
 name: cowork-mcp-audit
-description: Audit dédié aux MCP servers — énumère les serveurs déclarés par tous les plugins, mesure la taille des fichiers .mcp.json, identifie les serveurs probablement les plus coûteux en tokens (sans pouvoir mesurer leurs descriptions de tools depuis le sandbox). Déclencheurs — "audit MCP", "coût MCP", "MCP trop bavard", "MCP tools count", "trop de MCP servers", "MCP audit", "mesurer MCP", "lister MCP servers".
+description: Inventaire et chiffrage des MCP servers. Énumère les serveurs déclarés par tous les plugins, mesure la taille des fichiers .mcp.json, estime le coût per-turn à partir de constantes calibrées, ship un helper stdio (`probe_mcp_server.sh`) pour mesurer le poids réel d'un serveur en live (tool count, description bytes, schema bytes). Limites connues — transports HTTP, SSE et Streamable HTTP non probés en v0.2.x. Déclencheurs — "inventaire MCP", "lister MCP servers", "coût MCP", "MCP trop bavard", "mesurer MCP server", "combien me coûtent mes MCP", "tools count MCP", "probe MCP server".
 allowed-tools: Read, Grep, Glob, Bash
 ---
 

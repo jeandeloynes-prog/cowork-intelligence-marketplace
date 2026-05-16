@@ -1,5 +1,5 @@
 ---
-description: Audit gouvernance et maintenabilité — versionning, CHANGELOG, sources MCP, schemas, conventions de nommage, drift potentiel. Pas de focus token.
+description: Revue gouvernance et maintenabilité d'un setup Claude Code / Cowork — versionning semver, présence CHANGELOG, schémas MCP, conventions de nommage, signaux de drift, manifests incomplets. Pas de focus tokens (utiliser /cowork-optimize pour ça). Active les skills cowork-observability-governance + cowork-analysis-engine.
 argument-hint: [chemin optionnel]
 allowed-tools: Read, Grep, Glob, Bash
 ---

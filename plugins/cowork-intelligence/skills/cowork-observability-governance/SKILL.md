@@ -1,6 +1,6 @@
 ---
 name: cowork-observability-governance
-description: Observabilité agentique et gouvernance — OpenTelemetry GenAI semantic conventions, métriques (tokens, latency, tool calls, error rate), plateformes (Langfuse, LangSmith, Arize Phoenix, Datadog LLM Obs, Braintrust), tracing distribué, prompt debugging, versionnement skills/prompts, drift prevention, lifecycle, changelog, équipe. Déclencheurs — "observabilité agent", "tracing LLM", "Langfuse", "LangSmith", "Arize Phoenix", "OpenTelemetry GenAI", "métrique agent", "gouvernance IA", "skill versioning", "prompt lifecycle", "drift", "audit AI", "monitoring LLM".
+description: Observabilité agentique et gouvernance — OpenTelemetry GenAI semantic conventions, métriques (tokens, latency, tool calls, error rate), plateformes (Langfuse, LangSmith, Arize Phoenix, Datadog LLM Obs, Braintrust), tracing distribué, prompt debugging, versionnement skills/prompts, drift prevention, lifecycle, changelog, processus équipe. Couvre l'instrumentation, le tracing et la gouvernance (versions, changelog, drift) — PAS l'analyse statique d'un setup (voir `cowork-analysis-engine` pour ça). Déclencheurs — "observabilité agent", "tracing LLM", "Langfuse", "LangSmith", "Arize Phoenix", "OpenTelemetry GenAI", "métrique agent", "gouvernance IA", "skill versioning", "prompt lifecycle", "drift prevention", "monitoring LLM", "instrumenter agent".
 allowed-tools: Read, Grep, WebFetch
 ---
 

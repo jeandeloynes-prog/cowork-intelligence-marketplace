@@ -4,6 +4,24 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] — 2026-05-16
+
+### Changed
+- Descriptions de 3 skills et 3 commands réécrites pour réduire la collision de triggers sur le mot « audit » (finding HIGH de l'audit `cowork-analyze` exécuté en interne) :
+  - `cowork-analysis-engine` : ouvre désormais par « Static analyzer pour un setup… » au lieu de « Audit automatique… ». Plus discriminant pour le matcher.
+  - `cowork-mcp-audit` : ouvre par « Inventaire et chiffrage des MCP servers… » au lieu de « Audit dédié aux MCP servers… ». Mentionne explicitement le helper `probe_mcp_server.sh`.
+  - `cowork-observability-governance` : précise que la skill couvre instrumentation/tracing/gouvernance, **pas** l'analyse statique (cross-ref vers `cowork-analysis-engine`). Trigger « audit AI » retiré.
+  - `/cowork-analyze` : « Scan complet » au lieu de « Audit complet ».
+  - `/cowork-audit` : « Revue gouvernance » au lieu de « Audit gouvernance ».
+  - `/cowork-optimize` : « Plan de réduction » au lieu de « Audit ciblé ».
+- Aucun rename. Aucune signature publique modifiée. Les 6 commandes/skills se déclenchent par les mêmes phrases utilisateur qu'avant — seul le mot d'ouverture varie pour aider le matcher à choisir entre les 6 entités.
+
+### Notes
+- Option B retenue (durcissement descriptions), Option A (rename) rejetée car breaking change non justifié.
+- Findings upstream non adressés ici : timeouts manquants sur hooks vercel/superpowers, 5 SKILL.md > 20 KB, description superpowers `test-driven-development` < 80 chars, 9 descriptions superpowers en « Use when… ». Templates de PR à filer fournis séparément.
+
+---
+
 ## [0.2.2] — 2026-05-16 — hotfix
 
 ### Fixed

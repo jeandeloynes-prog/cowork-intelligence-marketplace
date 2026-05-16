@@ -1,5 +1,5 @@
 ---
-description: Audit ciblé sur la consommation de tokens — skills trop volumineuses, CLAUDE.md trop gros, MCP bavards, redondances coûteuses. Produit un plan de réduction priorisé.
+description: Plan de réduction du coût en tokens d'un setup Claude Code / Cowork. Cibles — skills body trop gros, CLAUDE.md trop gros, MCP descriptions bavardes, redondances coûteuses, hooks verbeux. Sort un plan priorisé par ROI tokens/effort, jamais de réécriture massive. Active les skills cowork-context-token-optimization + cowork-analysis-engine.
 argument-hint: [chemin optionnel]
 allowed-tools: Read, Grep, Glob, Bash
 ---

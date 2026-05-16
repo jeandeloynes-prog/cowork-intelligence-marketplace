@@ -1,5 +1,5 @@
 ---
-description: Audit complet d'un setup Claude Code / Cowork (skills, hooks, MCP, CLAUDE.md, commands). Produit un rapport priorisé avec correctifs.
+description: Scan complet d'un setup Claude Code / Cowork (skills, hooks, MCP, CLAUDE.md, commands). Inventaire + détection redondances + collisions de triggers + bloat tokens. Produit un rapport markdown priorisé HIGH/MEDIUM/LOW avec correctifs proposés (jamais d'écriture). Active la skill cowork-analysis-engine.
 argument-hint: [chemin optionnel — par défaut le repo courant]
 allowed-tools: Read, Grep, Glob, Bash
 ---
