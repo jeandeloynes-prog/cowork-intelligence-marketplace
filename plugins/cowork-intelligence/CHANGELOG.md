@@ -4,6 +4,22 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] — 2026-05-16
+
+### Added
+- **`hooks/graphify_post_edit.sh`** : log d'entrée systématique dans `~/.claude/data/graphify-stamps/hook-debug.log` à chaque déclenchement, AVANT toute vérification de pré-conditions. Permet de distinguer "le hook ne fire pas du tout" de "le hook fire mais sort tôt".
+- Format du log : `[YYYY-MM-DD HH:MM:SS] hook fired — pwd=<cwd> CLAUDE_PLUGIN_ROOT=<value>`. Si une pré-condition échoue (binary absent, config absent, refresh introuvable), une ligne `  skip: <raison>` est ajoutée.
+
+### Fixed
+- **Fallback de résolution `PLUGIN_ROOT`** : v0.3.4/v0.3.5 ne scannait que les versions hardcodées `0.3.0`/`0.3.1`. Désormais utilise `find ... | sort -V | tail -1` pour prendre la dernière version installée, peu importe le numéro.
+
+### Diagnostic guide
+Si après un Edit dans Claude Code en cwd projet, `hook-debug.log` :
+- Contient une ligne `hook fired` → le hook fire, le problème est ailleurs (refresh script qui sort silencieusement, ou redirection log différente).
+- Reste vide → le hook ne fire pas du tout. Causes possibles : Claude Code/Cowork ne déclenche pas PostToolUse, ou le matcher ne match pas le tool exact.
+
+---
+
 ## [0.3.5] — 2026-05-16 — hotfix
 
 ### Fixed

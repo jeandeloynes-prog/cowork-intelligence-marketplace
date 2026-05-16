@@ -1,44 +1,65 @@
 #!/usr/bin/env bash
-# cowork-intelligence — graphify_post_edit.sh (v0.3.1)
+# cowork-intelligence — graphify_post_edit.sh (v0.3.6)
 #
 # PostToolUse hook (matcher Edit|Write|MultiEdit).
 # After any file edit, trigger a Graphify incremental update for the current
-# project, in the background, with built-in debounce to avoid hammering.
+# project in the background, with debounce.
 #
-# Silent + no-op if:
-#   - the `graphify` binary is not on PATH or in ~/.local/bin/
-#   - the user prefers running `graphify watch` as a daemon (just don't create
-#     ~/.claude/graphify-config.json — the script then exits silently)
-#
-# To opt out entirely, remove the GRAPHIFY_BIN env var and ensure no
-# `graphify-config.json` exists. The hook becomes a no-op (~10 ms).
+# v0.3.6 adds an unconditional entry log to disambiguate "hook never fired"
+# from "hook fired but refresh exited silently".
 
 set -euo pipefail
 
-# Locate graphify binary the same way the refresh script does
+LOG_DIR="$HOME/.claude/data/graphify-stamps"
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+
+# ─── ENTRY MARKER (always written, no precondition) ──────────────────────
+# If you don't see lines in hook-debug.log after an Edit, the hook itself
+# never fires (Claude Code didn't trigger PostToolUse, or it ran a different
+# binary).
+{
+  printf '[%s] hook fired — pwd=%s CLAUDE_PLUGIN_ROOT=%s\n' \
+    "$(date '+%Y-%m-%d %H:%M:%S')" \
+    "$PWD" \
+    "${CLAUDE_PLUGIN_ROOT:-<unset>}"
+} >> "$LOG_DIR/hook-debug.log" 2>/dev/null
+
+# Locate graphify binary
 BIN="${GRAPHIFY_BIN:-}"
 [ -z "$BIN" ] && BIN=$(command -v graphify 2>/dev/null || echo "")
 [ -z "$BIN" ] && BIN="$HOME/.local/bin/graphify"
-[ -x "$BIN" ] || exit 0
+if [ ! -x "$BIN" ]; then
+  echo "  skip: graphify binary not found ($BIN)" >> "$LOG_DIR/hook-debug.log"
+  exit 0
+fi
 
 # Opt-in via config file presence
 CONFIG="$HOME/.claude/graphify-config.json"
-[ -f "$CONFIG" ] || exit 0
+if [ ! -f "$CONFIG" ]; then
+  echo "  skip: $CONFIG not found (opt-in)" >> "$LOG_DIR/hook-debug.log"
+  exit 0
+fi
 
+# Resolve plugin root — prefer Claude Code's $CLAUDE_PLUGIN_ROOT, fallback to
+# scanning installed versions (any of them — most recent wins).
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
 if [ -z "$PLUGIN_ROOT" ]; then
-  # Best-effort fallback — try the current version path
-  for v in 0.3.1 0.3.0; do
-    candidate="$HOME/.claude/plugins/cache/cowork-intelligence-marketplace/cowork-intelligence/$v"
-    [ -d "$candidate" ] && PLUGIN_ROOT="$candidate" && break
-  done
+  PLUGIN_ROOT=$(
+    find "$HOME/.claude/plugins/cache/cowork-intelligence-marketplace/cowork-intelligence" \
+      -maxdepth 1 -mindepth 1 -type d 2>/dev/null \
+      | sort -V | tail -1
+  )
 fi
-REFRESH="$PLUGIN_ROOT/scripts/graphify_refresh.sh"
-[ -x "$REFRESH" ] || exit 0
 
-# Fire and forget — log to a small file the user can inspect
-LOG_DIR="$HOME/.claude/data/graphify-stamps"
-mkdir -p "$LOG_DIR"
+REFRESH="$PLUGIN_ROOT/scripts/graphify_refresh.sh"
+if [ ! -x "$REFRESH" ]; then
+  echo "  skip: refresh script not found ($REFRESH)" >> "$LOG_DIR/hook-debug.log"
+  exit 0
+fi
+
+echo "  delegating to $REFRESH project" >> "$LOG_DIR/hook-debug.log"
+
+# Fire and forget — refresh output goes to post-edit.log
 ( "$REFRESH" project >> "$LOG_DIR/post-edit.log" 2>&1 ) &
 
 exit 0
