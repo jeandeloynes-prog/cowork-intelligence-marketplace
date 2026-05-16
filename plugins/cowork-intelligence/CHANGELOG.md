@@ -4,7 +4,18 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.1] — 2026-05-16
+## [0.2.2] — 2026-05-16 — hotfix
+
+### Fixed
+- **`.claude-plugin/plugin.json`** : retrait des blocs `commands`, `skills` et `hooks` ajoutés à tort en v0.2.1. Ils étaient documentés dans des recherches non-primaires comme « champs optionnels » mais sont en réalité **rejetés par le validateur de manifest de Claude Code 2.1.118** (`Validation errors: hooks: Invalid input, commands: Invalid input, skills: Invalid input` via `/doctor`). Le plugin v0.2.1 ne se chargeait pas du tout pour cette raison.
+- Confirmé empiriquement : Claude Code découvre automatiquement les sous-dossiers `commands/`, `skills/` et `hooks/hooks.json` sans déclaration explicite. La déclaration explicite n'est pas seulement inutile, elle casse le manifest.
+
+### Known limitation
+- Sur Claude Code 2.1.118, les slash commands de plugin restent invocables **uniquement avec le namespace** : `/cowork-intelligence:cowork-analyze`. Le retrait des fausses déclarations ne change pas ce comportement.
+
+---
+
+## [0.2.1] — 2026-05-16 — broken release, do not use
 
 ### Fixed
 - `hooks/token_budget_warner.sh` : ne somme plus les **bodies** des SKILL.md (cause de sur-estimation massive en v0.2.0). Compte désormais : (a) le contenu complet de la cascade CLAUDE.md, (b) le seul champ `description` du frontmatter YAML de chaque SKILL.md. Estimation per-turn correcte.
