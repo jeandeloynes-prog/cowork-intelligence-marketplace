@@ -1,110 +1,144 @@
 #!/usr/bin/env bash
-# cowork-intelligence — graphify_refresh.sh (v0.3.0)
+# cowork-intelligence — graphify_refresh.sh (v0.3.1)
 #
-# Trigger a Graphify re-index for a given scope, by reading
-# ~/.claude/graphify-config.json and running the configured CLI.
+# Re-index a Graphify graph (project-scoped) or refresh the global cross-repo
+# graph. Built on real Graphify sub-commands:
+#   - graphify update          → fast incremental, no LLM (default for projects)
+#   - graphify extract <path>  → initial build with LLM (only when graph doesn't exist yet)
+#   - graphify global add      → register a path in the global (user-level) graph
+#   - graphify global list     → query what's registered
 #
 # Usage:
-#   ./scripts/graphify_refresh.sh             # cwd-based project scope
-#   ./scripts/graphify_refresh.sh user        # user-level graph
-#   ./scripts/graphify_refresh.sh <project>   # explicit project name
-#   ./scripts/graphify_refresh.sh all         # user + cwd project
+#   ./scripts/graphify_refresh.sh             # cwd-based project scope (graphify update)
+#   ./scripts/graphify_refresh.sh project     # same
+#   ./scripts/graphify_refresh.sh extract     # force initial extract on cwd (slow + LLM)
+#   ./scripts/graphify_refresh.sh user        # global graph (graphify global add for known paths)
+#   ./scripts/graphify_refresh.sh all         # user then current project
 #
-# Behavior:
-#   - If ~/.claude/graphify-config.json is absent: exit 0 silently
-#     (graceful degradation — feature is opt-in).
-#   - If jq is missing: print a one-line warning, exit 0.
-#   - Honors a debounce window: if last refresh for this scope was < N
-#     seconds ago, skip with a short message. Stamp file lives at
-#     ~/.claude/data/graphify-stamps/<scope>.
-#   - On success, prints the elapsed time.
+# Config file: ~/.claude/graphify-config.json
+#   - If absent: defaults are used (binary autodetect, default Graphify args).
+#   - If present: overrides binary path and adds extra source paths to register
+#     in the global graph for the "user" scope.
 
 set -euo pipefail
 
 CONFIG="$HOME/.claude/graphify-config.json"
 STAMP_DIR="$HOME/.claude/data/graphify-stamps"
 
-if [ ! -f "$CONFIG" ]; then
+# Locate the Graphify binary
+BINARY="${GRAPHIFY_BIN:-}"
+if [ -z "$BINARY" ] && [ -f "$CONFIG" ] && command -v jq >/dev/null 2>&1; then
+  BINARY=$(jq -r '.binary // empty' "$CONFIG" 2>/dev/null || echo "")
+fi
+[ -z "$BINARY" ] && BINARY=$(command -v graphify || true)
+[ -z "$BINARY" ] && BINARY="$HOME/.local/bin/graphify"
+
+if [ ! -x "$BINARY" ]; then
+  # Graceful: feature opt-in. No graphify binary → no action.
   exit 0
 fi
 
-if ! command -v jq >/dev/null 2>&1; then
-  echo "[cowork-intelligence] graphify_refresh: jq required but missing — skip."
-  exit 0
+DEBOUNCE_DEFAULT=30
+DEBOUNCE=$DEBOUNCE_DEFAULT
+if [ -f "$CONFIG" ] && command -v jq >/dev/null 2>&1; then
+  DEBOUNCE=$(jq -r ".debounce_seconds // ${DEBOUNCE_DEFAULT}" "$CONFIG" 2>/dev/null || echo "$DEBOUNCE_DEFAULT")
 fi
 
 mkdir -p "$STAMP_DIR"
 
-BINARY=$(jq -r '.binary // empty' "$CONFIG")
-DEBOUNCE=$(jq -r '.debounce_seconds // 30' "$CONFIG")
+ARG="${1:-project}"
 
-if [ -z "$BINARY" ]; then
-  echo "[cowork-intelligence] graphify_refresh: 'binary' missing in $CONFIG — skip."
-  exit 0
-fi
-
-if [ ! -x "$BINARY" ]; then
-  echo "[cowork-intelligence] graphify_refresh: $BINARY not executable — skip."
-  exit 0
-fi
-
-# Resolve the scope argument
-ARG="${1:-}"
-if [ -z "$ARG" ]; then
-  # cwd-based: scope = basename of git toplevel, or basename of cwd
-  if SCOPE=$(git rev-parse --show-toplevel 2>/dev/null); then
-    SCOPE=$(basename "$SCOPE")
+# Resolve cwd project path (used for project / extract / all)
+resolve_project_path() {
+  if PROJ=$(git rev-parse --show-toplevel 2>/dev/null); then
+    echo "$PROJ"
   else
-    SCOPE=$(basename "$PWD")
+    echo "$PWD"
   fi
-fi
+}
 
-# Build the list of scopes to refresh
-SCOPES=()
-case "${ARG:-$SCOPE}" in
-  all)
-    SCOPES=("user")
-    if PROJ=$(git rev-parse --show-toplevel 2>/dev/null); then
-      SCOPES+=("$(basename "$PROJ")")
-    fi
+# Debounce check — returns 0 if we should skip, 1 if we should proceed
+check_debounce() {
+  local scope="$1"
+  local stamp="$STAMP_DIR/$scope"
+  [ -f "$stamp" ] || return 1
+  local last delta
+  last=$(cat "$stamp")
+  delta=$(( $(date +%s) - last ))
+  if [ "$delta" -lt "$DEBOUNCE" ]; then
+    echo "[cowork-intelligence] graphify_refresh: scope '$scope' refreshed ${delta}s ago (debounce=${DEBOUNCE}s) — skip."
+    return 0
+  fi
+  return 1
+}
+
+stamp_now() {
+  date +%s > "$STAMP_DIR/$1"
+}
+
+run_project() {
+  local mode="$1"   # update | extract
+  local path
+  path=$(resolve_project_path)
+  local scope
+  scope=$(basename "$path")
+
+  check_debounce "$scope" && return 0
+
+  echo "[cowork-intelligence] graphify_refresh: $mode → $path"
+  local start end
+  start=$(date +%s)
+  if [ "$mode" = "extract" ]; then
+    "$BINARY" extract "$path"
+  else
+    # `graphify update` runs in the cwd of the graph; cd into the project first.
+    ( cd "$path" && "$BINARY" update )
+  fi
+  end=$(date +%s)
+  echo "[cowork-intelligence] graphify_refresh: $mode '$scope' OK in $((end - start))s."
+  stamp_now "$scope"
+}
+
+run_user_global() {
+  check_debounce "user" && return 0
+
+  echo "[cowork-intelligence] graphify_refresh: refreshing global cross-repo graph"
+  local start end
+  start=$(date +%s)
+
+  # Re-register any extra source paths from config (idempotent — graphify
+  # global add is safe to call repeatedly on the same path).
+  if [ -f "$CONFIG" ] && command -v jq >/dev/null 2>&1; then
+    while IFS= read -r p; do
+      [ -z "$p" ] && continue
+      [ -d "$p" ] || continue
+      echo "  + $p"
+      "$BINARY" global add "$p" || true
+    done < <(jq -r '.user.global_paths[]? // empty' "$CONFIG")
+  fi
+
+  # List the global graph state (cheap, useful as a sanity check)
+  "$BINARY" global list || true
+
+  end=$(date +%s)
+  echo "[cowork-intelligence] graphify_refresh: user/global OK in $((end - start))s."
+  stamp_now "user"
+}
+
+case "$ARG" in
+  extract)
+    run_project extract
     ;;
-  *)
-    SCOPES=("${ARG:-$SCOPE}")
+  user)
+    run_user_global
+    ;;
+  all)
+    run_user_global
+    run_project update
+    ;;
+  project|*)
+    run_project update
     ;;
 esac
-
-now=$(date +%s)
-
-for scope in "${SCOPES[@]}"; do
-  args_json=$(jq -r --arg s "$scope" '.scopes[$s].command_args // empty | @json' "$CONFIG")
-  if [ -z "$args_json" ] || [ "$args_json" = "null" ]; then
-    echo "[cowork-intelligence] graphify_refresh: scope '$scope' not configured in $CONFIG — skip."
-    continue
-  fi
-
-  # Debounce check
-  stamp="$STAMP_DIR/$scope"
-  if [ -f "$stamp" ]; then
-    last=$(cat "$stamp")
-    delta=$(( now - last ))
-    if [ "$delta" -lt "$DEBOUNCE" ]; then
-      echo "[cowork-intelligence] graphify_refresh: scope '$scope' refreshed ${delta}s ago (debounce=${DEBOUNCE}s) — skip."
-      continue
-    fi
-  fi
-
-  # Parse the args array from JSON
-  mapfile -t ARGS < <(jq -r --arg s "$scope" '.scopes[$s].command_args[]' "$CONFIG")
-
-  echo "[cowork-intelligence] graphify_refresh: scope '$scope' running: $BINARY ${ARGS[*]}"
-  start=$(date +%s)
-  if "$BINARY" "${ARGS[@]}"; then
-    end=$(date +%s)
-    echo "[cowork-intelligence] graphify_refresh: scope '$scope' OK in $((end - start))s."
-    echo "$end" > "$stamp"
-  else
-    echo "[cowork-intelligence] graphify_refresh: scope '$scope' FAILED (non-zero exit)." >&2
-  fi
-done
 
 exit 0

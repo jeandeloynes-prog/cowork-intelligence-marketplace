@@ -4,6 +4,30 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] — 2026-05-16
+
+### Removed (deduplication with official Graphify Claude integration)
+- **`skills/cowork-graphify/SKILL.md`** : supprimé. Redondant avec le skill officiel installé par `graphify install --platform claude` (à `~/.claude/skills/graphify/SKILL.md`). Mon skill aurait créé une collision de triggers sur "code", "document", "graphe".
+- **`commands/cowork-graphify-query.md`** : supprimé. Redondant avec la slash command `/graphify` fournie par le skill officiel.
+
+### Changed (alignement avec les vraies sous-commandes Graphify)
+Après inspection de `graphify --help` (57 sous-commandes : extract, update, query, explain, path, watch, tree, global add/list, install --platform, hook 3-way, etc.), le wrapper utilise désormais les commandes réelles :
+- **`scripts/graphify_refresh.sh`** :
+  - `project` (défaut) → `cd $PROJECT && graphify update` (incrémental, **sans LLM**, gratuit en tokens).
+  - `extract` → `graphify extract $PROJECT` (build initial, lent, avec LLM — à n'invoquer qu'une fois).
+  - `user` → `graphify global add <path>` pour chaque path déclaré dans `~/.claude/graphify-config.json:.user.global_paths`, suivi de `graphify global list`.
+  - `all` → user puis project.
+  - Autodétection du binary (PATH puis `~/.local/bin/graphify`) avec override possible via `$GRAPHIFY_BIN`.
+- **`graphify-config.example.json`** : simplifié. Plus de `command_args` à deviner — la config ne déclare plus que le binary, le debounce et les `user.global_paths`. Le reste est géré par les sous-commandes natives.
+- **`commands/cowork-graphify-refresh.md`** : argument-hint mis à jour, doc clarifiée (update vs extract).
+- **`hooks/graphify_post_edit.sh`** : exit silencieusement si `~/.claude/graphify-config.json` absent OU si `graphify` introuvable. Fallback de recherche du `PLUGIN_ROOT` étendu pour gérer plusieurs versions cachées.
+
+### Notes
+- **Alternative recommandée** au hook PostToolUse : lancer `graphify watch` dans un terminal dédié — c'est le file-watcher natif de Graphify, plus robuste que notre hook fire-and-forget. Si tu adoptes `watch`, supprime ou ne crée pas `~/.claude/graphify-config.json` pour désactiver notre hook.
+- **Honnêteté méthodologique** : v0.3.0 a embarqué un skill et une command qui faisaient doublon avec l'intégration officielle Graphify. Cette erreur vient de mon manque de vérification — j'aurais dû te demander de lancer `graphify --help` AVANT de coder, pas après. La v0.3.1 corrige.
+
+---
+
 ## [0.3.0] — 2026-05-16
 
 ### Added — Graphify integration

@@ -1,6 +1,6 @@
 ---
-description: Déclenche la re-indexation du knowledge graph Graphify pour un scope donné (user, project, all). Lit la config ~/.claude/graphify-config.json, applique un debounce (par défaut 30s), exécute le CLI configuré. Silent si la config n'existe pas.
-argument-hint: "[scope: project | user | all | nom-projet] — defaut cwd"
+description: Re-indexe le knowledge graph Graphify pour un scope. Par defaut `graphify update` sur le projet courant (rapide, sans LLM). Force `graphify extract` pour un build initial (lent, avec LLM). Utilise `graphify global add/list` pour le scope user. Silent si binary `graphify` absent.
+argument-hint: "project | extract | user | all (defaut project)"
 allowed-tools: Bash
 ---
 
@@ -8,21 +8,26 @@ Argument fourni : $ARGUMENTS
 
 Procédure :
 
-1. Active la skill `cowork-graphify` pour le contexte.
+1. Active la skill `cowork-graphify` si présente, ou s'appuie sur le skill officiel Graphify si déjà installé via `graphify install --platform claude`.
 
 2. Exécute le script de refresh :
    ```bash
    bash "$CLAUDE_PLUGIN_ROOT/scripts/graphify_refresh.sh" $ARGUMENTS
    ```
 
-3. Affiche la sortie. Si le script reporte :
-   - `scope '<X>' OK in Ns` → confirme à l'utilisateur que la mémoire Graphify est à jour.
-   - `scope '<X>' not configured` → suggère d'ajouter une entrée dans `~/.claude/graphify-config.json`.
-   - `scope '<X>' refreshed Ns ago (debounce)` → c'est normal, le debounce protège contre les re-builds en cascade.
-   - `scope '<X>' FAILED` → indique le code retour ; ne propose PAS de fix automatique.
+3. Affiche la sortie. Interprétation :
+   - `update '<scope>' OK in Ns` → re-extract incrémental réussi. Graphe à jour, **sans appel LLM** donc gratuit en tokens.
+   - `extract '<scope>' OK in Ns` → build initial avec LLM. Plus lent + coût LLM. À ne lancer qu'une fois par projet.
+   - `user/global OK in Ns` → paths du `~/.claude/graphify-config.json` ré-enregistrés, état global listé.
+   - `refreshed Ns ago (debounce)` → normal, le debounce protège contre les re-builds en cascade.
+   - Pas de sortie → binary `graphify` absent ou non exécutable, feature désactivée silencieusement.
 
-4. Ne modifie jamais `~/.claude/graphify-config.json` automatiquement — c'est à l'utilisateur de l'éditer.
+4. Ne modifie jamais `~/.claude/graphify-config.json` automatiquement.
 
-Notes :
-- Le MCP server `graphify-erudiam` peut renvoyer des résultats légèrement stale après une re-indexation (cache interne possible). Une seconde `query_graph` quelques secondes plus tard reflète généralement l'état neuf.
-- La re-indexation peut durer plusieurs secondes voire minutes selon la taille du scope. Le script garde stdout court.
+Sous-commandes Graphify utilisées par ce wrapper (vérifiées via `graphify --help`) :
+- `graphify update` (rapide, sans LLM) — pour les refresh post-edit.
+- `graphify extract <path>` (lent, avec LLM) — uniquement pour un premier build.
+- `graphify global add <path>` (idempotent) — pour le scope user / cross-repo.
+- `graphify global list` — pour voir l'état du graphe global.
+
+Alternative à ce wrapper : `graphify watch` (daemon natif Graphify qui re-indexe en continu). Si tu lances `graphify watch` dans un terminal séparé, le hook `PostToolUse` de ce plugin devient redondant et tu peux désactiver l'auto-refresh en supprimant `~/.claude/graphify-config.json`.

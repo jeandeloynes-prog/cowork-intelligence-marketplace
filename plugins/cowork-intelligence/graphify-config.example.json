@@ -1,20 +1,13 @@
 {
-  "_doc": "Example configuration for the cowork-intelligence Graphify integration. Copy to ~/.claude/graphify-config.json and adapt to your real Graphify CLI signature. Discover the CLI with `graphify --help` first — the command_args below are placeholders you must replace.",
+  "_doc": "Config for cowork-intelligence Graphify integration v0.3.1. The binary is autodetected (PATH then ~/.local/bin/graphify) but can be pinned here. The script uses real Graphify sub-commands: `graphify update` (fast, no LLM) for projects, `graphify global add` for the user scope. Initial extraction with LLM is `graphify extract <path>` — run it manually once via /cowork-intelligence:cowork-graphify-refresh extract.",
 
   "binary": "/Users/admin/.local/bin/graphify",
   "debounce_seconds": 30,
 
-  "scopes": {
-    "user": {
-      "_doc": "Cross-project graph. Holds notes, snippets, transverse knowledge.",
-      "command_args": ["build", "--graph-id", "user", "--input", "/Users/admin/Documents/notes"],
-      "data_dir": "/Users/admin/.claude/data/graphify-user"
-    },
-
-    "concours-eu": {
-      "_doc": "Project-scoped graph for the concours-eu repo. Matches `basename $(git rev-parse --show-toplevel)`.",
-      "command_args": ["build", "--graph-id", "concours-eu", "--input", "/Users/admin/Documents/Claude/Projects/Erudiam/concours-eu"],
-      "data_dir": "/Users/admin/Documents/Claude/Projects/Erudiam/concours-eu/.graphify"
-    }
+  "user": {
+    "_doc": "Paths to register in Graphify's global cross-repo graph. graphify global add is idempotent — registering a path multiple times is safe.",
+    "global_paths": [
+      "/Users/admin/Documents/notes"
+    ]
   }
 }
