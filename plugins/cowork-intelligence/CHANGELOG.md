@@ -4,6 +4,25 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-05-16
+
+### Added — Graphify integration
+- **Skill `cowork-graphify`** : intégration du knowledge graph Graphify Erudiam (16K nodes, 127K edges sur concours-eu observés en live via MCP). Documente le pattern pre-dev (consultation) / post-dev (re-indexation), les 7 tools du MCP `graphify-erudiam`, le format de `~/.claude/graphify-config.json`, le support multi-scope (`user` transverse + `<project>` par repo).
+- **Slash command `/cowork-intelligence:cowork-graphify-query <question>`** : wrapper convivial autour de `mcp__graphify-erudiam__query_graph`. Parse `depth` et `budget` optionnels.
+- **Slash command `/cowork-intelligence:cowork-graphify-refresh [scope]`** : invoque `scripts/graphify_refresh.sh` pour re-indexer un scope (`user`, `<project>`, `all`).
+- **Script `scripts/graphify_refresh.sh`** : lit `~/.claude/graphify-config.json`, applique un debounce (30s par défaut), exécute le CLI Graphify configuré. Stamp dans `~/.claude/data/graphify-stamps/<scope>`.
+- **Hook `PostToolUse` matcher `Edit|Write|MultiEdit`** (`graphify_post_edit.sh`) : déclenche la re-indexation en arrière-plan après toute modification de fichier. Silent si `graphify-config.json` absent (opt-in).
+
+### Notes
+- **Configuration requise côté utilisateur** : créer `~/.claude/graphify-config.json` avec le chemin binaire (`/Users/admin/.local/bin/graphify` détecté) et les `command_args` adaptés à la signature du CLI (à découvrir via `graphify --help`).
+- **Graceful degradation** : sans fichier de config, aucun nouveau composant ne s'exécute. Les anciennes features de la v0.2.3 restent disponibles.
+- **Limites assumées** :
+  - Le support multi-graph d'une seule instance Graphify n'a pas été vérifié — si Graphify est mono-graphe, il faudra deux instances (deux entrées dans `.mcp.json`).
+  - L'invalidation du cache MCP après re-indexation n'est pas garantie.
+  - Le hook PostToolUse fire-and-forget : si le rebuild échoue, le log est dans `~/.claude/data/graphify-stamps/post-edit.log`, pas remonté au user.
+
+---
+
 ## [0.2.3] — 2026-05-16
 
 ### Changed

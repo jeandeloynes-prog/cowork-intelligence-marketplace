@@ -28,6 +28,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PLUGIN_ROOT/hooks/graphify_post_edit.sh",
+            "timeout": 2000
+          }
+        ]
+      }
     ]
   }
 }

@@ -1,6 +1,6 @@
 ---
 description: Active ou désactive en bloc les 13 plugins claude-for-legal en patchant ~/.claude/settings.json. Backup automatique. À lancer suivi de /reload-plugins.
-argument-hint: <on|off>
+argument-hint: "on | off"
 allowed-tools: Bash
 ---
 
