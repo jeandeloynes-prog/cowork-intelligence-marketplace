@@ -141,16 +141,22 @@ run_project() {
 
   check_debounce "$scope" && return 0
 
-  local backend_label="default"
-  [ -n "$BACKEND" ] && backend_label="$BACKEND"
+  # `graphify update` is no-LLM by design — it does AST re-extraction only and
+  # rejects --backend (error: unknown update option: --backend, observed in
+  # graphify 0.7.19). So BACKEND_ARGS is only passed to `extract`.
+  local backend_label="n/a (update has no LLM)"
+  if [ "$mode" = "extract" ]; then
+    backend_label="default"
+    [ -n "$BACKEND" ] && backend_label="$BACKEND"
+  fi
   echo "[cowork-intelligence] graphify_refresh: $mode → $path (backend=$backend_label)"
   local start end
   start=$(date +%s)
   if [ "$mode" = "extract" ]; then
     "$BINARY" extract "$path" "${BACKEND_ARGS[@]}"
   else
-    # `graphify update` runs in the cwd of the graph; cd into the project first.
-    ( cd "$path" && "$BINARY" update "${BACKEND_ARGS[@]}" )
+    # update doesn't accept --backend; runs in the cwd of the graph
+    ( cd "$path" && "$BINARY" update )
   fi
   end=$(date +%s)
   echo "[cowork-intelligence] graphify_refresh: $mode '$scope' OK in $((end - start))s."

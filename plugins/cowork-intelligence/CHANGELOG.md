@@ -4,6 +4,17 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] — 2026-05-16 — hotfix
+
+### Fixed
+- **`scripts/graphify_refresh.sh`** : `--backend ollama` ne passe plus à `graphify update`. Observé en runtime sur graphify 0.7.19 : `error: unknown update option: --backend`. La sous-commande `update` est no-LLM (re-extract AST uniquement) et n'accepte pas `--backend`. Seul `extract` l'accepte.
+- Log mis à jour : `(backend=n/a (update has no LLM))` pour les opérations update, `(backend=ollama)` (ou autre) pour les extract.
+
+### Note
+- Bug introduit en v0.3.3 quand `BACKEND_ARGS` était passé indifféremment aux deux modes. v0.3.3 fonctionnait pour `extract` mais cassait `update` (et donc le hook PostToolUse auto-refresh).
+
+---
+
 ## [0.3.3] — 2026-05-16
 
 ### Added
