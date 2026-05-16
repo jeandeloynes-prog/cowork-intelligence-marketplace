@@ -1,25 +1,20 @@
 {
-  "_note": "Example marketplace manifest for distributing this plugin via a git-based plugin marketplace. Anthropic's official schema for marketplace.json was not located during the research phase — verify field names against the live Claude Code docs before relying on this file. Treat this as a template, not a binding spec.",
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "cowork-intelligence-marketplace",
-  "description": "Single-plugin marketplace for the cowork-intelligence framework.",
+  "description": "Single-plugin marketplace for the cowork-intelligence framework — audit, optimization and decision system for Claude Code / Cowork.",
+  "owner": {
+    "name": "Jean de Loynes"
+  },
   "plugins": [
     {
-      "id": "cowork-intelligence",
-      "name": "Cowork Intelligence Framework",
-      "version": "0.1.0",
-      "description": "Audit, optimization and decision system for Claude Code / Cowork (skills, hooks, MCP, CLAUDE.md, context engineering, token optimization).",
-      "path": ".",
-      "keywords": [
-        "claude-code",
-        "cowork",
-        "skills",
-        "hooks",
-        "mcp",
-        "context-engineering",
-        "token-optimization",
-        "observability",
-        "governance"
-      ]
+      "name": "cowork-intelligence",
+      "description": "Framework d'analyse et d'optimisation pour Claude Code / Claude Cowork — skills, hooks, MCP, CLAUDE.md, context engineering, token optimization, orchestration agentique, observabilité, gouvernance. Bilingue FR/EN. Inclut /cowork-analyze, /cowork-optimize, /cowork-audit.",
+      "author": {
+        "name": "Jean de Loynes"
+      },
+      "category": "productivity",
+      "source": ".",
+      "homepage": "https://github.com/jeandeloynes-prog/cowork-intelligence-marketplace"
     }
   ]
 }
