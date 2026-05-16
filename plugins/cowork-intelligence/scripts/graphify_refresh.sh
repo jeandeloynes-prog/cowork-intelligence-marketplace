@@ -170,14 +170,30 @@ run_user_global() {
   local start end
   start=$(date +%s)
 
-  # Re-register any extra source paths from config (idempotent — graphify
-  # global add is safe to call repeatedly on the same path).
+  # For each user-global path:
+  #   1. extract the graph (produces <path>/graphify-out/graph.json) — uses LLM
+  #   2. register the produced graph.json in the global registry
+  # `graphify global add` expects a graph.json FILE, not a directory (observed
+  # in graphify 0.7.19: passing a directory yields [Errno 21] Is a directory).
   if [ -f "$CONFIG" ] && command -v jq >/dev/null 2>&1; then
     while IFS= read -r p; do
       [ -z "$p" ] && continue
       [ -d "$p" ] || continue
       echo "  + $p"
-      "$BINARY" global add "$p" || true
+
+      # Step 1: extract (with backend args — this step uses LLM)
+      if ! ( cd "$p" && "$BINARY" extract . "${BACKEND_ARGS[@]}" ); then
+        echo "    extract failed for $p — skip" >&2
+        continue
+      fi
+
+      # Step 2: register the produced graph.json
+      local graph_json="$p/graphify-out/graph.json"
+      if [ -f "$graph_json" ]; then
+        "$BINARY" global add "$graph_json" || true
+      else
+        echo "    no graph.json found at $graph_json — skip global add" >&2
+      fi
     done < <(jq -r '.user.global_paths[]? // empty' "$CONFIG")
   fi
 

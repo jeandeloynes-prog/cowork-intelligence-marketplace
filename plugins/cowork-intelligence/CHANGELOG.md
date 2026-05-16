@@ -4,6 +4,20 @@ Toutes les évolutions notables du plugin `cowork-intelligence` sont consignées
 
 Format : [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning : [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5] — 2026-05-16 — hotfix
+
+### Fixed
+- **`scripts/graphify_refresh.sh:run_user_global`** : workflow user-global réécrit en deux étapes :
+  1. `cd <path> && graphify extract . [--backend ollama --api-timeout 600]` (utilise le LLM, produit `<path>/graphify-out/graph.json`)
+  2. `graphify global add <path>/graphify-out/graph.json` (le file path, pas le dir)
+- Observé en runtime sur graphify 0.7.19 : `graphify global add <dir>` rejette avec `[Errno 21] Is a directory`. La sous-commande attend un fichier `graph.json` produit par un extract préalable.
+
+### Note
+- Bug introduit dès v0.3.0 — j'avais assumé sans vérifier que `global add` acceptait n'importe quel path. Découvert par ton Claude Code en lisant `graphify --help` ligne par ligne : `global add <graph.json>  add/update a project graph in the global graph`.
+- Si `~/Documents/notes` est quasiment vide (juste un README), l'extract va consommer quelques tokens LLM (gratuit côté LM Studio), puis enregistrer le tout petit graphe dans `~/.graphify/global-graph.json`.
+
+---
+
 ## [0.3.4] — 2026-05-16 — hotfix
 
 ### Fixed
